@@ -1,0 +1,306 @@
+import { db, transaction } from "./index";
+import type {
+  Clip,
+  Issue,
+  IssueStatus,
+  IssueWithPublication,
+  Page,
+  Publication,
+} from "./types";
+
+/* ---------------------------------------------------------------- *
+ * Publications
+ * ---------------------------------------------------------------- */
+
+export function listPublications(includeInactive = false): Publication[] {
+  return db()
+    .prepare(
+      `SELECT * FROM publications
+       ${includeInactive ? "" : "WHERE is_active = 1"}
+       ORDER BY sort_order, name`,
+    )
+    .all() as Publication[];
+}
+
+export function getPublicationBySlug(slug: string): Publication | null {
+  return (
+    (db()
+      .prepare("SELECT * FROM publications WHERE slug = ?")
+      .get(slug) as Publication | undefined) ?? null
+  );
+}
+
+export function createPublication(input: {
+  slug: string;
+  name: string;
+  name_local?: string | null;
+  language?: Publication["language"];
+  region?: string | null;
+  sort_order?: number;
+}): Publication {
+  const info = db()
+    .prepare(
+      `INSERT INTO publications (slug, name, name_local, language, region, sort_order)
+       VALUES (@slug, @name, @name_local, @language, @region, @sort_order)`,
+    )
+    .run({
+      slug: input.slug,
+      name: input.name,
+      name_local: input.name_local ?? null,
+      language: input.language ?? "pa",
+      region: input.region ?? null,
+      sort_order: input.sort_order ?? 0,
+    });
+  return db()
+    .prepare("SELECT * FROM publications WHERE id = ?")
+    .get(info.lastInsertRowid) as Publication;
+}
+
+/* ---------------------------------------------------------------- *
+ * Issues
+ * ---------------------------------------------------------------- */
+
+const ISSUE_WITH_PUB = `
+  SELECT i.*,
+         p.slug        AS publication_slug,
+         p.name        AS publication_name,
+         p.name_local  AS publication_name_local,
+         p.language    AS publication_language
+  FROM issues i
+  JOIN publications p ON p.id = i.publication_id
+`;
+
+/**
+ * Claim a slot for an edition before any work starts.
+ *
+ * The UNIQUE (publication_id, publish_date) constraint means a second upload
+ * for the same day cannot create a duplicate. Re-uploading the same day is a
+ * normal correction, so that case resets the existing row rather than failing.
+ */
+export function upsertIssue(publicationId: number, publishDate: string): Issue {
+  return transaction(() => {
+    const existing = db()
+      .prepare(
+        "SELECT * FROM issues WHERE publication_id = ? AND publish_date = ?",
+      )
+      .get(publicationId, publishDate) as Issue | undefined;
+
+    if (existing) {
+      // Replacing a day's edition: drop the old pages, reset the row.
+      db().prepare("DELETE FROM pages WHERE issue_id = ?").run(existing.id);
+      db()
+        .prepare(
+          `UPDATE issues
+           SET status = 'processing', page_count = 0, error = NULL,
+               published_at = NULL, created_at = datetime('now')
+           WHERE id = ?`,
+        )
+        .run(existing.id);
+      return db()
+        .prepare("SELECT * FROM issues WHERE id = ?")
+        .get(existing.id) as Issue;
+    }
+
+    const info = db()
+      .prepare(
+        `INSERT INTO issues (publication_id, publish_date, status)
+         VALUES (?, ?, 'processing')`,
+      )
+      .run(publicationId, publishDate);
+    return db()
+      .prepare("SELECT * FROM issues WHERE id = ?")
+      .get(info.lastInsertRowid) as Issue;
+  });
+}
+
+export function markIssueReady(
+  issueId: number,
+  pageCount: number,
+  sourceKey: string | null,
+): void {
+  db()
+    .prepare(
+      `UPDATE issues
+       SET status = 'ready', page_count = ?, source_key = ?,
+           error = NULL, published_at = datetime('now')
+       WHERE id = ?`,
+    )
+    .run(pageCount, sourceKey, issueId);
+}
+
+export function markIssueFailed(issueId: number, message: string): void {
+  db()
+    .prepare("UPDATE issues SET status = 'failed', error = ? WHERE id = ?")
+    .run(message.slice(0, 500), issueId);
+}
+
+export function getIssue(
+  publicationSlug: string,
+  publishDate: string,
+): IssueWithPublication | null {
+  return (
+    (db()
+      .prepare(`${ISSUE_WITH_PUB} WHERE p.slug = ? AND i.publish_date = ?`)
+      .get(publicationSlug, publishDate) as IssueWithPublication | undefined) ??
+    null
+  );
+}
+
+export function getIssueById(id: number): IssueWithPublication | null {
+  return (
+    (db()
+      .prepare(`${ISSUE_WITH_PUB} WHERE i.id = ?`)
+      .get(id) as IssueWithPublication | undefined) ?? null
+  );
+}
+
+/** The most recent ready edition for a publication, for "open today's paper". */
+export function getLatestIssue(
+  publicationSlug: string,
+): IssueWithPublication | null {
+  return (
+    (db()
+      .prepare(
+        `${ISSUE_WITH_PUB}
+         WHERE p.slug = ? AND i.status = 'ready'
+         ORDER BY i.publish_date DESC LIMIT 1`,
+      )
+      .get(publicationSlug) as IssueWithPublication | undefined) ?? null
+  );
+}
+
+export function listIssues(opts: {
+  publicationSlug?: string;
+  from?: string;
+  to?: string;
+  status?: IssueStatus;
+  limit?: number;
+  offset?: number;
+}): { items: IssueWithPublication[]; total: number } {
+  const where: string[] = [];
+  const params: Record<string, unknown> = {};
+
+  if (opts.publicationSlug) {
+    where.push("p.slug = @slug");
+    params.slug = opts.publicationSlug;
+  }
+  if (opts.from) {
+    where.push("i.publish_date >= @from");
+    params.from = opts.from;
+  }
+  if (opts.to) {
+    where.push("i.publish_date <= @to");
+    params.to = opts.to;
+  }
+  if (opts.status) {
+    where.push("i.status = @status");
+    params.status = opts.status;
+  }
+
+  const clause = where.length ? `WHERE ${where.join(" AND ")}` : "";
+  const limit = Math.min(opts.limit ?? 50, 200);
+  const offset = Math.max(opts.offset ?? 0, 0);
+
+  const total = (
+    db()
+      .prepare(
+        `SELECT COUNT(*) AS n FROM issues i
+         JOIN publications p ON p.id = i.publication_id ${clause}`,
+      )
+      .get(params) as { n: number }
+  ).n;
+
+  const items = db()
+    .prepare(
+      `${ISSUE_WITH_PUB} ${clause}
+       ORDER BY i.publish_date DESC, p.sort_order
+       LIMIT @limit OFFSET @offset`,
+    )
+    .all({ ...params, limit, offset }) as IssueWithPublication[];
+
+  return { items, total };
+}
+
+/** Dates that have at least one ready edition, for the calendar picker. */
+export function listAvailableDates(
+  publicationSlug: string,
+  month: string,
+): string[] {
+  const rows = db()
+    .prepare(
+      `SELECT DISTINCT i.publish_date AS d
+       FROM issues i JOIN publications p ON p.id = i.publication_id
+       WHERE p.slug = ? AND i.status = 'ready' AND i.publish_date LIKE ?
+       ORDER BY d`,
+    )
+    .all(publicationSlug, `${month}-%`) as { d: string }[];
+  return rows.map((r) => r.d);
+}
+
+/* ---------------------------------------------------------------- *
+ * Pages
+ * ---------------------------------------------------------------- */
+
+export function insertPages(
+  issueId: number,
+  pages: Array<{
+    page_number: number;
+    width: number;
+    height: number;
+    storage_prefix: string;
+  }>,
+): void {
+  const stmt = db().prepare(
+    `INSERT INTO pages (issue_id, page_number, width, height, storage_prefix)
+     VALUES (@issue_id, @page_number, @width, @height, @storage_prefix)`,
+  );
+  transaction(() => {
+    for (const p of pages) stmt.run({ issue_id: issueId, ...p });
+  });
+}
+
+export function listPages(issueId: number): Page[] {
+  return db()
+    .prepare("SELECT * FROM pages WHERE issue_id = ? ORDER BY page_number")
+    .all(issueId) as Page[];
+}
+
+export function getPage(issueId: number, pageNumber: number): Page | null {
+  return (
+    (db()
+      .prepare("SELECT * FROM pages WHERE issue_id = ? AND page_number = ?")
+      .get(issueId, pageNumber) as Page | undefined) ?? null
+  );
+}
+
+export function getPageById(id: number): Page | null {
+  return (
+    (db().prepare("SELECT * FROM pages WHERE id = ?").get(id) as
+      | Page
+      | undefined) ?? null
+  );
+}
+
+/* ---------------------------------------------------------------- *
+ * Clips
+ * ---------------------------------------------------------------- */
+
+export function createClip(clip: Omit<Clip, "created_at" | "storage_key"> & {
+  storage_key?: string | null;
+}): Clip {
+  db()
+    .prepare(
+      `INSERT INTO clips (id, page_id, x, y, w, h, storage_key)
+       VALUES (@id, @page_id, @x, @y, @w, @h, @storage_key)`,
+    )
+    .run({ ...clip, storage_key: clip.storage_key ?? null });
+  return db().prepare("SELECT * FROM clips WHERE id = ?").get(clip.id) as Clip;
+}
+
+export function getClip(id: string): Clip | null {
+  return (
+    (db().prepare("SELECT * FROM clips WHERE id = ?").get(id) as
+      | Clip
+      | undefined) ?? null
+  );
+}
