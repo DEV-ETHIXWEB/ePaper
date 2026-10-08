@@ -297,6 +297,31 @@ export function createClip(clip: Omit<Clip, "created_at" | "storage_key"> & {
   return db().prepare("SELECT * FROM clips WHERE id = ?").get(clip.id) as Clip;
 }
 
+/**
+ * An identical selection on the same page, if one was already made.
+ *
+ * Two readers clipping the same story — or one reader clipping twice — should
+ * not each cost a decode, a crop and a stored file. Rectangles are rounded to
+ * four decimals before they are stored, which on a 1700px page is sub-pixel,
+ * so an exact match here is a genuine match.
+ */
+export function findClipByRect(
+  pageId: number,
+  rect: { x: number; y: number; w: number; h: number },
+): Clip | null {
+  return (
+    (db()
+      .prepare(
+        `SELECT * FROM clips
+          WHERE page_id = @page_id
+            AND x = @x AND y = @y AND w = @w AND h = @h
+            AND storage_key IS NOT NULL
+          ORDER BY created_at LIMIT 1`,
+      )
+      .get({ page_id: pageId, ...rect }) as Clip | undefined) ?? null
+  );
+}
+
 export function getClip(id: string): Clip | null {
   return (
     (db().prepare("SELECT * FROM clips WHERE id = ?").get(id) as

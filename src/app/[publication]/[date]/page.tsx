@@ -53,6 +53,7 @@ export default async function EditionPage({ params }: Props) {
 
   const store = storage();
   const pages: ViewerPage[] = listPages(issue.id).map((p) => ({
+    id: p.id,
     number: p.page_number,
     width: p.width,
     height: p.height,
