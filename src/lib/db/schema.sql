@@ -75,6 +75,24 @@ CREATE TABLE IF NOT EXISTS clips (
 CREATE INDEX IF NOT EXISTS idx_clips_page ON clips (page_id);
 
 -- Applied migrations, so schema changes are additive and auditable.
+/*
+ * Full-text search over the text layer of each page.
+ *
+ * tokenize='trigram', not the usual 'unicode61'. unicode61 treats Gurmukhi
+ * matras as word separators, so "ਪਟਿਆਲਾ" indexes as ਪਟ / ਆ / ਆਲ and Punjabi
+ * search returns fragments and false positives. trigram is script-agnostic,
+ * keeps matras and subjoined characters intact, matches mid-word, and still
+ * handles Latin case-insensitively. The index is larger, which is the price.
+ *
+ * Virtual tables take no foreign keys, so rows here are cleaned up explicitly
+ * whenever the pages they describe are deleted.
+ */
+CREATE VIRTUAL TABLE IF NOT EXISTS page_text USING fts5(
+  body,
+  page_id UNINDEXED,
+  tokenize = 'trigram'
+);
+
 CREATE TABLE IF NOT EXISTS migrations (
   name       TEXT PRIMARY KEY,
   applied_at TEXT NOT NULL DEFAULT (datetime('now'))

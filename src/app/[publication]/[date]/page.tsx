@@ -10,6 +10,7 @@ export const dynamic = "force-dynamic";
 
 interface Props {
   params: Promise<{ publication: string; date: string }>;
+  searchParams: Promise<{ page?: string }>;
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
@@ -24,8 +25,9 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   };
 }
 
-export default async function EditionPage({ params }: Props) {
+export default async function EditionPage({ params, searchParams }: Props) {
   const { publication, date } = await params;
+  const { page: requestedPage } = await searchParams;
 
   if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) notFound();
   if (!getPublicationBySlug(publication)) notFound();
@@ -84,7 +86,8 @@ export default async function EditionPage({ params }: Props) {
         </div>
       </header>
 
-      <PageViewer pages={pages} />
+      {/* A search hit links straight to the page it was found on. */}
+      <PageViewer pages={pages} initialPage={Number(requestedPage) || 1} />
     </main>
   );
 }

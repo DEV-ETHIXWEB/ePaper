@@ -1,5 +1,6 @@
 import { createCanvas } from "@napi-rs/canvas";
 import sharp from "sharp";
+import { normalizeExtractedText } from "@/lib/gurmukhi";
 
 /**
  * Three sizes per page, because a newspaper page is read three ways: picked
@@ -20,6 +21,41 @@ export interface RenderedPage {
   width: number;
   height: number;
   variants: Record<VariantName, Buffer>;
+  /** The page's text layer, empty when the PDF carries no extractable text. */
+  text: string;
+}
+
+/**
+ * Pull the text layer out of an already-open page.
+ *
+ * Nearly free here because the page object is loaded for rendering anyway.
+ * Comes back empty for a scanned or outlined PDF, which is a real possibility
+ * for newsprint and is treated as "no text", not as a failure.
+ */
+async function extractText(page: {
+  getTextContent: () => Promise<{ items: unknown[] }>;
+}): Promise<string> {
+  try {
+    const content = await page.getTextContent();
+    const out: string[] = [];
+    for (const raw of content.items) {
+      const item = raw as { str?: string; hasEOL?: boolean };
+      if (typeof item.str !== "string") continue;
+      out.push(item.str);
+      // Newspaper columns arrive as many short runs; without the EOL hint the
+      // whole page collapses into one unbroken line.
+      if (item.hasEOL) out.push("\n");
+    }
+    return normalizeExtractedText(
+      out
+        .join(" ")
+        // Control characters are stripped because search highlighting uses two
+        // of them as markers; text carrying its own would open a stray tag.
+        .replace(/[\u0000-\u0008\u000b\u000c\u000e-\u001f]/g, "")
+    );
+  } catch {
+    return "";
+  }
 }
 
 /**
@@ -92,6 +128,7 @@ export async function renderPdf(
         width: canvas.width,
         height: canvas.height,
         variants,
+        text: await extractText(page),
       });
       page.cleanup();
       opts.onPage?.(n, doc.numPages);

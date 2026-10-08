@@ -13,6 +13,22 @@ export interface IngestResult {
   pageCount: number;
   bytesStored: number;
   durationMs: number;
+  /** Pages that carried an extractable text layer, so search can find them. */
+  pagesWithText: number;
+  /**
+   * Set when a Punjabi edition yielded text that contains almost no Gurmukhi.
+   * That is the signature of a legacy ASCII-mapped font such as AnmolLipi:
+   * the PDF looks right but its text layer is unsearchable gibberish.
+   */
+  textLooksGarbled: boolean;
+}
+
+/** Share of characters that are Gurmukhi, ignoring spaces and punctuation. */
+function gurmukhiRatio(text: string): number {
+  const letters = text.replace(/[^\p{L}\p{M}]/gu, "");
+  if (letters.length === 0) return 0;
+  const gurmukhi = letters.match(/[\u0A00-\u0A7F]/gu)?.length ?? 0;
+  return gurmukhi / letters.length;
 }
 
 export class IngestError extends Error {
@@ -71,6 +87,7 @@ export async function ingestEdition(input: {
       width: number;
       height: number;
       storage_prefix: string;
+      text: string;
     }> = [];
 
     for (const page of pages) {
@@ -89,6 +106,7 @@ export async function ingestEdition(input: {
         width: page.width,
         height: page.height,
         storage_prefix: prefix,
+        text: page.text,
       });
     }
 
@@ -101,11 +119,19 @@ export async function ingestEdition(input: {
     insertPages(issue.id, rows);
     markIssueReady(issue.id, rows.length, src);
 
+    const withText = rows.filter((r) => r.text.trim().length > 0);
+    const combined = withText.map((r) => r.text).join(" ");
+
     return {
       issueId: issue.id,
       pageCount: rows.length,
       bytesStored,
       durationMs: Date.now() - started,
+      pagesWithText: withText.length,
+      textLooksGarbled:
+        publication.language === "pa" &&
+        combined.length > 200 &&
+        gurmukhiRatio(combined) < 0.2,
     };
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);

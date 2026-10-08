@@ -1,4 +1,5 @@
 import { db, transaction } from "./index";
+import { normalizeQuery } from "@/lib/gurmukhi";
 import type {
   Clip,
   Issue,
@@ -87,6 +88,13 @@ export function upsertIssue(publicationId: number, publishDate: string): Issue {
 
     if (existing) {
       // Replacing a day's edition: drop the old pages, reset the row.
+      // page_text is a virtual table and takes no foreign key, so its rows
+      // have to go first or they outlive the pages and pollute search.
+      db()
+        .prepare(
+          "DELETE FROM page_text WHERE page_id IN (SELECT id FROM pages WHERE issue_id = ?)",
+        )
+        .run(existing.id);
       db().prepare("DELETE FROM pages WHERE issue_id = ?").run(existing.id);
       db()
         .prepare(
@@ -265,14 +273,26 @@ export function insertPages(
     width: number;
     height: number;
     storage_prefix: string;
+    text?: string;
   }>,
 ): void {
-  const stmt = db().prepare(
+  const insertPage = db().prepare(
     `INSERT INTO pages (issue_id, page_number, width, height, storage_prefix)
      VALUES (@issue_id, @page_number, @width, @height, @storage_prefix)`,
   );
+  const insertText = db().prepare(
+    "INSERT INTO page_text (page_id, body) VALUES (?, ?)",
+  );
   transaction(() => {
-    for (const p of pages) stmt.run({ issue_id: issueId, ...p });
+    for (const p of pages) {
+      const { text, ...row } = p;
+      const info = insertPage.run({ issue_id: issueId, ...row });
+      // A page with no text layer is indexed as nothing rather than as an
+      // empty string, so it cannot surface as a zero-relevance hit.
+      if (text && text.trim()) {
+        insertText.run(info.lastInsertRowid as number, text);
+      }
+    }
   });
 }
 
@@ -296,6 +316,102 @@ export function getPageById(id: number): Page | null {
       | Page
       | undefined) ?? null
   );
+}
+
+/* ---------------------------------------------------------------- *
+ * Search
+ * ---------------------------------------------------------------- */
+
+export interface SearchHit {
+  page_id: number;
+  page_number: number;
+  publish_date: string;
+  publication_slug: string;
+  publication_name: string;
+  publication_name_local: string | null;
+  thumb_prefix: string;
+  snippet: string;
+}
+
+/** Shortest query the trigram index can answer. */
+export const MIN_QUERY_LENGTH = 3;
+
+/**
+ * Markers FTS5 wraps matched terms in.
+ *
+ * Control characters rather than <mark>, because snippet() does not escape the
+ * indexed text and that text comes out of a PDF we did not write. Emitting its
+ * HTML directly would let a crafted PDF inject script into the results page.
+ * The caller escapes first, then swaps these for real tags.
+ */
+export const HIT_OPEN = "\u0002";
+export const HIT_CLOSE = "\u0003";
+
+/**
+ * Turn whatever the reader typed into a safe FTS5 query.
+ *
+ * FTS5 has its own expression syntax, so a bare query containing a quote, a
+ * colon or a bare AND/OR is either a syntax error or means something the
+ * reader did not intend. Every word is quoted and the words are ANDed, which
+ * is what a search box is expected to do.
+ */
+export function toMatchExpression(raw: string): string | null {
+  // Folded the same way the indexed text was, so both sides lost the same marks.
+  const words = normalizeQuery(raw)
+    .replace(/"/g, " ")
+    .split(/\s+/)
+    .map((w) => w.trim())
+    .filter((w) => w.length > 0);
+  if (words.length === 0) return null;
+  // Trigram cannot match a term shorter than three characters at all.
+  const usable = words.filter((w) => w.length >= MIN_QUERY_LENGTH);
+  if (usable.length === 0) return null;
+  return usable.map((w) => `"${w}"`).join(" AND ");
+}
+
+export function searchPages(
+  raw: string,
+  opts: { publicationSlug?: string; limit?: number; offset?: number } = {},
+): { items: SearchHit[]; total: number } {
+  const match = toMatchExpression(raw);
+  if (!match) return { items: [], total: 0 };
+
+  const params: Record<string, unknown> = { match };
+  let pubClause = "";
+  if (opts.publicationSlug) {
+    pubClause = "AND p.slug = @slug";
+    params.slug = opts.publicationSlug;
+  }
+
+  const from = `
+    FROM page_text t
+    JOIN pages pg   ON pg.id = t.page_id
+    JOIN issues i   ON i.id = pg.issue_id
+    JOIN publications p ON p.id = i.publication_id
+    WHERE t.body MATCH @match AND i.status = 'ready' ${pubClause}`;
+
+  const total = (
+    db().prepare(`SELECT COUNT(*) AS n ${from}`).get(params) as { n: number }
+  ).n;
+
+  const items = db()
+    .prepare(
+      `SELECT pg.id AS page_id, pg.page_number, pg.storage_prefix AS thumb_prefix,
+              i.publish_date,
+              p.slug AS publication_slug, p.name AS publication_name,
+              p.name_local AS publication_name_local,
+              snippet(page_text, 0, char(2), char(3), '…', 24) AS snippet
+       ${from}
+       ORDER BY rank, i.publish_date DESC
+       LIMIT @limit OFFSET @offset`,
+    )
+    .all({
+      ...params,
+      limit: Math.min(opts.limit ?? 20, 100),
+      offset: Math.max(opts.offset ?? 0, 0),
+    }) as SearchHit[];
+
+  return { items, total };
 }
 
 /* ---------------------------------------------------------------- *
