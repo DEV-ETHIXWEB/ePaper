@@ -74,9 +74,14 @@ export default async function EditionPage({ params }: Props) {
         <h1 className="text-xl font-bold text-neutral-900 dark:text-neutral-50">
           {issue.publication_name_local ?? issue.publication_name}
         </h1>
-        <p className="text-sm text-neutral-600 dark:text-neutral-400">
-          {formatDate(date, issue.publication_language)} · {issue.page_count} ਸਫ਼ੇ
-        </p>
+        <div className="flex items-baseline gap-3">
+          <p className="text-sm text-neutral-600 dark:text-neutral-400">
+            {formatDate(date, issue.publication_language)} · {issue.page_count} ਸਫ਼ੇ
+          </p>
+          <Link href={`/${publication}/archive/`} className="text-sm underline">
+            ਪੁਰਾਣੇ ਅੰਕ
+          </Link>
+        </div>
       </header>
 
       <PageViewer pages={pages} />

@@ -27,3 +27,52 @@ export function todayISO(): string {
     day: "2-digit",
   }).format(new Date());
 }
+
+const WEEKDAYS_PA = ["ਐਤ", "ਸੋਮ", "ਮੰਗਲ", "ਬੁੱਧ", "ਵੀਰ", "ਸ਼ੁੱਕਰ", "ਸ਼ਨੀ"];
+const WEEKDAYS_HI = ["रवि", "सोम", "मंगल", "बुध", "गुरु", "शुक्र", "शनि"];
+const WEEKDAYS_EN = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+
+export type Lang = "pa" | "hi" | "en";
+
+/** Short weekday names, Sunday first, for the archive calendar. */
+export function weekdayNames(lang: Lang = "pa"): string[] {
+  return lang === "hi" ? WEEKDAYS_HI : lang === "en" ? WEEKDAYS_EN : WEEKDAYS_PA;
+}
+
+/** "2026-10" to "ਅਕਤੂਬਰ 2026". Same reason as formatDate: no Intl. */
+export function formatMonth(month: string, lang: Lang = "pa"): string {
+  const m = /^(\d{4})-(\d{2})$/.exec(month);
+  if (!m) return month;
+  const [, y, mm] = m;
+  const months = lang === "hi" ? MONTHS_HI : lang === "en" ? MONTHS_EN : MONTHS_PA;
+  return `${months[Number(mm) - 1]} ${y}`;
+}
+
+/** The month an ISO date falls in. */
+export function monthOf(iso: string): string {
+  return iso.slice(0, 7);
+}
+
+/**
+ * Month arithmetic in UTC.
+ *
+ * A local-time Date rolls into the wrong month for anyone west of UTC on the
+ * first of the month, which would quietly skip a month in the calendar nav.
+ */
+export function shiftMonth(month: string, by: number): string {
+  const [y, m] = month.split("-").map(Number);
+  const d = new Date(Date.UTC(y, m - 1 + by, 1));
+  return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, "0")}`;
+}
+
+/** Day cells for a month grid: leading blanks, then every day, Sunday first. */
+export function monthGrid(month: string): (string | null)[] {
+  const [y, m] = month.split("-").map(Number);
+  const first = new Date(Date.UTC(y, m - 1, 1));
+  const days = new Date(Date.UTC(y, m, 0)).getUTCDate();
+  const cells: (string | null)[] = Array(first.getUTCDay()).fill(null);
+  for (let d = 1; d <= days; d += 1) {
+    cells.push(`${month}-${String(d).padStart(2, "0")}`);
+  }
+  return cells;
+}

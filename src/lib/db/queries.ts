@@ -237,6 +237,23 @@ export function listAvailableDates(
   return rows.map((r) => r.d);
 }
 
+/**
+ * The span the archive covers, so the calendar's month arrows stop at the ends
+ * instead of letting readers walk into empty years.
+ */
+export function issueDateRange(
+  publicationSlug: string,
+): { first: string; last: string } | null {
+  const row = db()
+    .prepare(
+      `SELECT MIN(i.publish_date) AS first, MAX(i.publish_date) AS last
+       FROM issues i JOIN publications p ON p.id = i.publication_id
+       WHERE p.slug = ? AND i.status = 'ready'`,
+    )
+    .get(publicationSlug) as { first: string | null; last: string | null };
+  return row?.first && row.last ? { first: row.first, last: row.last } : null;
+}
+
 /* ---------------------------------------------------------------- *
  * Pages
  * ---------------------------------------------------------------- */
