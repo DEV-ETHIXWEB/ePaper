@@ -3,6 +3,17 @@ import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
+  /**
+   * Native modules cannot be bundled — they load a platform-specific .node
+   * binary at runtime. Turbopack fails with "non-ecmascript placeable asset"
+   * if it tries. These stay external and are required normally on the server.
+   */
+  serverExternalPackages: [
+    "better-sqlite3",
+    "sharp",
+    "@napi-rs/canvas",
+    "pdfjs-dist",
+  ],
   // Links throughout the app are written with a trailing slash; matching the
   // config means readers get the page directly instead of a redirect hop on
   // every navigation.
