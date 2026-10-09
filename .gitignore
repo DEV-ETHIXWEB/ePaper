@@ -45,3 +45,6 @@ next-env.d.ts
 
 # Sample PDFs used for development
 /samples/out
+
+# Tesseract models, fetched on first use and cached beside the database
+*.traineddata

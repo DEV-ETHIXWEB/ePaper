@@ -77,6 +77,29 @@ export function normalizeExtractedText(text: string): string {
 }
 
 /**
+ * Fold text that OCR produced.
+ *
+ * Only the marks, none of the repairs. OCR reads the page as a person does,
+ * so its output is already in logical order with real word spacing. Running
+ * the PDF repairs over it actively damages the text: the rule that closes up
+ * single spaces exists because a PDF splits one word into glyph clusters, and
+ * applied here it welds genuine words together — "ਰੋਜ਼ਾਨਾ ਚੜ੍ਹਦੀਕਲਾ" came back
+ * as one run.
+ *
+ * Folding still happens, and for OCR it earns its place twice over: the
+ * vertically stacked marks are both the ones a thin ToUnicode map drops and
+ * the ones OCR most often misreads, since they are only a few pixels tall on
+ * newsprint. Dropping them from the text and the query alike makes a search
+ * tolerant of both failures at once.
+ */
+export function normalizeOcrText(text: string): string {
+  return fold(text)
+    .replace(/[ \t]+/g, " ")
+    .replace(/ *\n */g, "\n")
+    .trim();
+}
+
+/**
  * Fold a reader's query the same way.
  *
  * No reordering here: what someone types is already in logical order, and

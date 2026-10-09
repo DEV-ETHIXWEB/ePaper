@@ -31,7 +31,19 @@ export function getPublicationBySlug(slug: string): Publication | null {
   );
 }
 
-export function createPublication(input: {
+/**
+ * Create a publication, or correct one that already exists.
+ *
+ * Upsert rather than insert, because the seed is the record of what these
+ * titles are and a correction to it has to reach a database that was already
+ * seeded. Educater was carried as English for weeks; its PDFs embed a Gurmukhi
+ * font, so OCR read Punjabi pages with the Latin model and indexed nothing. An
+ * insert-only seed could never have repaired that.
+ *
+ * The slug is the identity and is never rewritten, so editions keep pointing
+ * at the right title and existing URLs keep working.
+ */
+export function upsertPublication(input: {
   slug: string;
   name: string;
   name_local?: string | null;
@@ -39,10 +51,16 @@ export function createPublication(input: {
   region?: string | null;
   sort_order?: number;
 }): Publication {
-  const info = db()
+  db()
     .prepare(
       `INSERT INTO publications (slug, name, name_local, language, region, sort_order)
-       VALUES (@slug, @name, @name_local, @language, @region, @sort_order)`,
+       VALUES (@slug, @name, @name_local, @language, @region, @sort_order)
+       ON CONFLICT(slug) DO UPDATE SET
+         name       = excluded.name,
+         name_local = excluded.name_local,
+         language   = excluded.language,
+         region     = excluded.region,
+         sort_order = excluded.sort_order`,
     )
     .run({
       slug: input.slug,
@@ -53,9 +71,12 @@ export function createPublication(input: {
       sort_order: input.sort_order ?? 0,
     });
   return db()
-    .prepare("SELECT * FROM publications WHERE id = ?")
-    .get(info.lastInsertRowid) as Publication;
+    .prepare("SELECT * FROM publications WHERE slug = ?")
+    .get(input.slug) as Publication;
 }
+
+/** @deprecated Use upsertPublication. Kept so older callers keep compiling. */
+export const createPublication = upsertPublication;
 
 /* ---------------------------------------------------------------- *
  * Issues
@@ -316,6 +337,101 @@ export function getPageById(id: number): Page | null {
       | Page
       | undefined) ?? null
   );
+}
+
+/* ---------------------------------------------------------------- *
+ * Text indexing
+ * ---------------------------------------------------------------- */
+
+export type TextStatus = "pending" | "indexed" | "skipped" | "failed";
+
+export interface IndexJob {
+  issue_id: number;
+  publication_slug: string;
+  publication_language: string;
+  publish_date: string;
+}
+
+/**
+ * Take the next edition needing text, marking it claimed in the same
+ * statement.
+ *
+ * One UPDATE ... RETURNING rather than a select then an update: two workers,
+ * or one worker restarted mid-run, would otherwise both pick up the same
+ * edition and OCR it twice.
+ */
+export function claimNextIndexJob(): IndexJob | null {
+  const row = db()
+    .prepare(
+      `UPDATE issues SET text_status = 'working'
+        WHERE id = (
+          SELECT i.id FROM issues i
+           WHERE i.status = 'ready' AND i.text_status = 'pending'
+           ORDER BY i.publish_date DESC, i.id
+           LIMIT 1
+        )
+      RETURNING id AS issue_id,
+                (SELECT slug FROM publications WHERE id = publication_id) AS publication_slug,
+                (SELECT language FROM publications WHERE id = publication_id) AS publication_language,
+                publish_date`,
+    )
+    .get() as IndexJob | undefined;
+  return row ?? null;
+}
+
+export function finishIndexJob(
+  issueId: number,
+  status: TextStatus,
+  source: string | null,
+  confidence: number | null,
+): void {
+  db()
+    .prepare(
+      "UPDATE issues SET text_status = ?, text_source = ?, ocr_confidence = ? WHERE id = ?",
+    )
+    .run(status, source, confidence, issueId);
+}
+
+/** Replace one page's indexed text. Used by the indexer after OCR. */
+export function setPageText(pageId: number, text: string): void {
+  transaction(() => {
+    db().prepare("DELETE FROM page_text WHERE page_id = ?").run(pageId);
+    if (text.trim()) {
+      db().prepare("INSERT INTO page_text (page_id, body) VALUES (?, ?)").run(pageId, text);
+    }
+  });
+}
+
+/**
+ * Release jobs left claimed by a process that is no longer running.
+ *
+ * A job is marked 'working' while it is indexed. If the server is restarted or
+ * killed mid-edition, that row stays claimed and the edition would never
+ * become searchable, with nothing to say why. Only one indexer runs at a time,
+ * so at startup anything still marked 'working' is by definition abandoned.
+ */
+export function releaseStaleIndexJobs(): number {
+  return db()
+    .prepare("UPDATE issues SET text_status = 'pending' WHERE text_status = 'working'")
+    .run().changes;
+}
+
+/** Put editions back in the queue, for a reindex after the pipeline changes. */
+export function requeueIndexing(opts: { all?: boolean } = {}): number {
+  const where = opts.all
+    ? "status = 'ready'"
+    : "status = 'ready' AND text_status IN ('failed', 'working')";
+  return db().prepare(`UPDATE issues SET text_status = 'pending' WHERE ${where}`).run()
+    .changes;
+}
+
+export function indexingStats(): Record<string, number> {
+  const rows = db()
+    .prepare(
+      "SELECT text_status AS s, COUNT(*) AS n FROM issues WHERE status = 'ready' GROUP BY text_status",
+    )
+    .all() as { s: string; n: number }[];
+  return Object.fromEntries(rows.map((r) => [r.s, r.n]));
 }
 
 /* ---------------------------------------------------------------- *

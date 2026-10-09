@@ -39,6 +39,27 @@ function migrate(conn: Database.Database): void {
   // applying it on every boot is safe and keeps a fresh checkout working with
   // no separate migrate step.
   conn.exec(sql);
+
+  // Columns added after the first release. CREATE TABLE IF NOT EXISTS cannot
+  // add them to a database that already exists, and ALTER TABLE has no
+  // IF NOT EXISTS, so each one is checked first. Keeps a fresh checkout and an
+  // upgraded install on the same schema with no separate migrate step.
+  addColumn(conn, "issues", "text_status", "TEXT NOT NULL DEFAULT 'pending'");
+  addColumn(conn, "issues", "text_source", "TEXT");
+  addColumn(conn, "issues", "ocr_confidence", "REAL");
+}
+
+function addColumn(
+  conn: Database.Database,
+  table: string,
+  column: string,
+  definition: string,
+): void {
+  const existing = conn
+    .prepare(`PRAGMA table_info(${table})`)
+    .all() as { name: string }[];
+  if (existing.some((c) => c.name === column)) return;
+  conn.exec(`ALTER TABLE ${table} ADD COLUMN ${column} ${definition}`);
 }
 
 /** Run several statements as one unit; rolls back if any of them throws. */

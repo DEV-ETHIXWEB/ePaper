@@ -7,6 +7,7 @@ import {
 } from "@/lib/db/queries";
 import { pagePrefix, sourceKey, storage, issuePrefix } from "@/lib/storage";
 import { VARIANTS, renderPdf, type VariantName } from "./render";
+import { startIndexing } from "./indexer";
 
 export interface IngestResult {
   issueId: number;
@@ -118,6 +119,10 @@ export async function ingestEdition(input: {
 
     insertPages(issue.id, rows);
     markIssueReady(issue.id, rows.length, src);
+
+    // Published and readable. Text indexing runs behind this and does not
+    // hold the upload open.
+    startIndexing();
 
     const withText = rows.filter((r) => r.text.trim().length > 0);
     const combined = withText.map((r) => r.text).join(" ");

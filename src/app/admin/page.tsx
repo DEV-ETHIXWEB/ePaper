@@ -2,7 +2,8 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import LogoutButton from "@/components/admin/LogoutButton";
 import UploadForm from "@/components/admin/UploadForm";
-import { listIssues, listPublications } from "@/lib/db/queries";
+import IndexPanel from "@/components/admin/IndexPanel";
+import { indexingStats, listIssues, listPublications } from "@/lib/db/queries";
 import { formatDate, todayISO } from "@/lib/format";
 
 export const metadata: Metadata = {
@@ -59,6 +60,8 @@ export default function AdminPage() {
         }))}
         today={today}
       />
+
+      <IndexPanel initial={indexingStats()} />
 
       <section className="mt-8">
         <h2 className="mb-3 text-sm font-bold text-ink-faint">ਹਾਲ ਦੇ ਅੰਕ</h2>
