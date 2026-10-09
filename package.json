@@ -10,7 +10,10 @@
     "seed": "tsx --tsconfig tsconfig.json scripts/seed.ts",
     "ingest": "tsx --tsconfig tsconfig.json scripts/ingest.ts",
     "typecheck": "tsc --noEmit",
-    "check": "npm run typecheck && npm run lint"
+    "check": "npm run typecheck && npm run lint",
+    "check-pdf": "tsx scripts/check-pdf-text.mts",
+    "migrate": "tsx scripts/migrate-vedanta.mts",
+    "backup": "bash scripts/backup.sh"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1146.0",
