@@ -47,7 +47,7 @@ export default function ClipShare({
       >
         <h2 className="mb-3 text-base font-bold">ਕਲਿੱਪ ਤਿਆਰ ਹੈ</h2>
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={imageUrl} alt="ਕਲਿੱਪ" className="mb-4 w-full rounded-lg border border-line border-line" />
+        <img src={imageUrl} alt="ਕਲਿੱਪ" className="mb-4 w-full rounded-lg border border-line" />
 
         <div className="mb-3 flex flex-wrap gap-2">
           {targets.map((t) => (
@@ -57,14 +57,14 @@ export default function ClipShare({
             </a>
           ))}
           <a href={imageUrl} download
-            className="rounded-lg border border-line px-3 py-2 text-xs font-semibold border-line">
+            className="rounded-lg border border-line px-3 py-2 text-xs font-semibold">
             ਡਾਊਨਲੋਡ
           </a>
         </div>
 
         <div className="flex gap-2">
           <input readOnly value={share}
-            className="min-w-0 flex-1 rounded-lg border border-line bg-surface-soft px-3 py-2 text-xs border-line bg-surface" />
+            className="min-w-0 flex-1 rounded-lg border border-line bg-surface-soft px-3 py-2 text-xs bg-surface" />
           <button type="button"
             onClick={async () => {
               try {
@@ -73,7 +73,7 @@ export default function ClipShare({
                 setTimeout(() => setCopied(false), 2000);
               } catch { /* clipboard blocked; the field is selectable */ }
             }}
-            className="rounded-lg border border-line px-3 py-2 text-xs font-semibold border-line">
+            className="rounded-lg border border-line px-3 py-2 text-xs font-semibold">
             {copied ? "ਕਾਪੀ ਹੋਇਆ" : "ਕਾਪੀ"}
           </button>
         </div>

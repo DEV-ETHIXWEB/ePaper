@@ -16,7 +16,7 @@ export default function LogoutButton() {
         router.push("/admin/login/");
         router.refresh();
       }}
-      className="rounded-lg border border-line px-3 py-1.5 text-sm font-medium disabled:opacity-60 border-line"
+      className="rounded-lg border border-line px-3 py-1.5 text-sm font-medium disabled:opacity-60"
     >
       {busy ? "…" : "Sign out"}
     </button>

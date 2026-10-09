@@ -80,3 +80,21 @@ export function safeEqual(a: string, b: string): boolean {
 export function adminConfigured(): boolean {
   return Boolean(env.AUTH_SECRET && env.ADMIN_USERNAME && env.ADMIN_PASSWORD);
 }
+
+/**
+ * Authenticate a request that is not behind the proxy.
+ *
+ * Routes excluded from the proxy matcher, such as the upload endpoint, have to
+ * check the session themselves. Returning the session rather than a boolean
+ * lets a caller log who did what.
+ */
+export async function requireSession(
+  request: Request,
+): Promise<Session | null> {
+  const cookie = request.headers.get("cookie") ?? "";
+  // Parsed by hand because this runs outside the proxy, where NextRequest's
+  // cookie helper is not in play.
+  const match = new RegExp(`(?:^|;\\s*)${SESSION_COOKIE}=([^;]*)`).exec(cookie);
+  if (!match) return null;
+  return readSession(decodeURIComponent(match[1]), process.env.AUTH_SECRET);
+}

@@ -90,12 +90,12 @@ export default async function ArchivePage({ params, searchParams }: Props) {
           : `${formatMonth(month, lang)} ਵਿੱਚ ਕੋਈ ਅੰਕ ਨਹੀਂ`}
       </p>
 
-      <div className="rounded-xl border border-line p-3 border-line">
+      <div className="rounded-xl border border-line p-3">
         <div className="mb-3 flex items-center justify-between gap-2">
           {prev ? (
             <Link href={`/${publication}/archive/?m=${prev}`} rel="prev"
               aria-label={`${formatMonth(prev, lang)}`}
-              className="rounded-lg border border-line px-3 py-1.5 text-sm border-line">
+              className="rounded-lg border border-line px-3 py-1.5 text-sm">
               ←
             </Link>
           ) : (
@@ -107,7 +107,7 @@ export default async function ArchivePage({ params, searchParams }: Props) {
           {next ? (
             <Link href={`/${publication}/archive/?m=${next}`} rel="next"
               aria-label={`${formatMonth(next, lang)}`}
-              className="rounded-lg border border-line px-3 py-1.5 text-sm border-line">
+              className="rounded-lg border border-line px-3 py-1.5 text-sm">
               →
             </Link>
           ) : (

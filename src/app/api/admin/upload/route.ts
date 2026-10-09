@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { IngestError, ingestEdition } from "@/lib/ingest";
 import { getPublicationBySlug } from "@/lib/db/queries";
+import { requireSession } from "@/lib/auth";
 
 export const runtime = "nodejs";
 /** A thirty-page edition takes a while to render; do not cut it off. */
@@ -10,6 +11,12 @@ export const maxDuration = 300;
 const MAX_BYTES = 300 * 1024 * 1024;
 
 export async function POST(request: Request) {
+  // This route is outside the proxy matcher so its body is not buffered, which
+  // means the session check that the proxy would have done happens here.
+  if (!(await requireSession(request))) {
+    return NextResponse.json({ error: "Not signed in" }, { status: 401 });
+  }
+
   let form: FormData;
   try {
     form = await request.formData();

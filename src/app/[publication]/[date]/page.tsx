@@ -72,7 +72,7 @@ export default async function EditionPage({ params, searchParams }: Props) {
         <span>{issue.publication_name_local ?? issue.publication_name}</span>
       </nav>
 
-      <header className="mb-5 flex flex-wrap items-baseline justify-between gap-2 border-b border-line pb-3 border-line">
+      <header className="mb-5 flex flex-wrap items-baseline justify-between gap-2 border-b border-line pb-3">
         <h1 className="text-xl font-bold text-ink">
           {issue.publication_name_local ?? issue.publication_name}
         </h1>

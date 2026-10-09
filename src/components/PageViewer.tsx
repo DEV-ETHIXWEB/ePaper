@@ -213,14 +213,14 @@ export default function PageViewer({
     <div className="flex flex-col gap-3">
       <div className="flex flex-wrap items-center gap-2">
         <button type="button" onClick={() => goTo(index - 1)} disabled={index === 0}
-          className="rounded-lg border border-line px-3 py-1.5 text-sm font-medium disabled:opacity-40 border-line">
+          className="rounded-lg border border-line px-3 py-1.5 text-sm font-medium disabled:opacity-40">
           ← ਪਿੱਛੇ
         </button>
         <span className="text-sm tabular-nums text-ink-faint">
           ਸਫ਼ਾ {page.number} / {pages.length}
         </span>
         <button type="button" onClick={() => goTo(index + 1)} disabled={index === pages.length - 1}
-          className="rounded-lg border border-line px-3 py-1.5 text-sm font-medium disabled:opacity-40 border-line">
+          className="rounded-lg border border-line px-3 py-1.5 text-sm font-medium disabled:opacity-40">
           ਅੱਗੇ →
         </button>
 
@@ -235,15 +235,15 @@ export default function PageViewer({
           </button>
           <button type="button" aria-label="Zoom out"
             onClick={() => setZoom((z) => Math.max(z / 1.4, MIN_ZOOM))}
-            className="size-9 rounded-lg border border-line text-lg border-line">−</button>
+            className="size-9 rounded-lg border border-line text-lg">−</button>
           <span className="w-14 text-center text-sm tabular-nums text-ink-faint">
             {Math.round(zoom * 100)}%
           </span>
           <button type="button" aria-label="Zoom in"
             onClick={() => setZoom((z) => Math.min(z * 1.4, MAX_ZOOM))}
-            className="size-9 rounded-lg border border-line text-lg border-line">+</button>
+            className="size-9 rounded-lg border border-line text-lg">+</button>
           <button type="button" onClick={resetView}
-            className="ms-1 rounded-lg border border-line px-3 py-1.5 text-sm border-line">
+            className="ms-1 rounded-lg border border-line px-3 py-1.5 text-sm">
             ਰੀਸੈੱਟ
           </button>
         </div>
@@ -271,7 +271,7 @@ export default function PageViewer({
 
       <div
         ref={frameRef}
-        className="relative overflow-hidden rounded-xl border border-line bg-surface-soft border-line bg-surface"
+        className="relative overflow-hidden rounded-xl border border-line bg-surface-soft bg-surface"
         style={{
           touchAction: clipMode || zoom > 1 ? "none" : "pan-y",
           cursor: clipMode ? "crosshair" : zoom > 1 ? (dragging ? "grabbing" : "grab") : "auto",

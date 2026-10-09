@@ -65,13 +65,13 @@ export default async function SearchPage({ searchParams }: Props) {
           autoFocus
           placeholder="ਸ਼ਬਦ ਲਿਖੋ, ਜਿਵੇਂ ਪਟਿਆਲਾ"
           aria-label="ਖੋਜ"
-          className="min-w-0 flex-1 rounded-lg border border-line px-3 py-2 text-sm border-line bg-surface"
+          className="min-w-0 flex-1 rounded-lg border border-line px-3 py-2 text-sm bg-surface"
         />
         <select
           name="p"
           defaultValue={pub}
           aria-label="ਅਖ਼ਬਾਰ"
-          className="rounded-lg border border-line px-3 py-2 text-sm border-line bg-surface"
+          className="rounded-lg border border-line px-3 py-2 text-sm bg-surface"
         >
           <option value="">ਸਾਰੇ ਅਖ਼ਬਾਰ</option>
           {publications.map((p) => (
@@ -101,7 +101,7 @@ export default async function SearchPage({ searchParams }: Props) {
       <ol className="space-y-3">
         {items.map((hit) => (
           <li key={hit.page_id}
-            className="rounded-xl border border-line p-3 border-line">
+            className="rounded-xl border border-line p-3">
             <Link href={`/${hit.publication_slug}/${hit.publish_date}/?page=${hit.page_number}`}
               className="flex gap-3">
               {/* eslint-disable-next-line @next/next/no-img-element */}

@@ -40,5 +40,22 @@ export async function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/admin/:path*", "/api/admin/:path*"],
+  /**
+   * The upload endpoint is deliberately absent.
+   *
+   * When a route is behind the proxy, Next clones and buffers the whole
+   * request body in memory so it can be read twice, capped by
+   * experimental.proxyClientMaxBodySize, which defaults to 10MB. Their largest
+   * daily edition is a 20MB PDF, so every upload of it was silently truncated
+   * and then rejected as "not a file upload". Raising the cap would work but
+   * would hold a whole newspaper in memory on every upload.
+   *
+   * So that route authenticates itself, with requireSession(), and streams
+   * its body instead.
+   */
+  matcher: [
+    "/admin/:path*",
+    "/api/admin/login",
+    "/api/admin/logout",
+  ],
 };
