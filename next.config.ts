@@ -2,6 +2,12 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   reactStrictMode: true,
+  /**
+   * Standalone output: the container ships the server and only the modules it
+   * actually imports, instead of the whole node_modules tree. Matters here
+   * because the dependency set includes sharp, pdfjs and tesseract.js.
+   */
+  output: "standalone",
   poweredByHeader: false,
   /**
    * Native modules cannot be bundled — they load a platform-specific .node

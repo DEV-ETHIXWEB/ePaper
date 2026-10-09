@@ -1,0 +1,19 @@
+services:
+  epaper:
+    build: .
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    env_file: .env.production
+    volumes:
+      # Everything that must survive a redeploy: the database, the rendered
+      # pages when running on local storage, and the Tesseract models.
+      - epaper-data:/app/data
+    # OCR and PDF rendering are CPU bound and will happily use every core,
+    # which on a small VPS starves the web server. Leaving headroom keeps the
+    # site responsive while a morning's editions are being processed.
+    cpus: "2.0"
+    mem_limit: 2g
+
+volumes:
+  epaper-data:
