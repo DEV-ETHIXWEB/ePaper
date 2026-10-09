@@ -1,51 +1,103 @@
 import Link from "next/link";
-import { listPublications, getLatestIssue } from "@/lib/db/queries";
-import { formatDate } from "@/lib/format";
+import { listPublications, getLatestIssue, listPages } from "@/lib/db/queries";
+import { storage } from "@/lib/storage";
+import { formatDate, todayISO } from "@/lib/format";
 
 export const dynamic = "force-dynamic";
 
 export default function HomePage() {
-  const publications = listPublications();
+  const store = storage();
+  const today = todayISO();
 
-  const cards = publications.map((p) => ({
-    ...p,
-    latest: getLatestIssue(p.slug),
-  }));
+  // A newspaper stand shows front pages, not a list of names. The thumbnail
+  // is the one that already exists for the page strip, so this costs nothing
+  // extra to serve.
+  const cards = listPublications().map((p) => {
+    const latest = getLatestIssue(p.slug);
+    const first = latest ? listPages(latest.id)[0] : null;
+    return {
+      ...p,
+      latest,
+      cover: first ? store.url(`${first.storage_prefix}/thumb.webp`) : null,
+    };
+  });
+
+  const live = cards.filter((c) => c.latest);
+  const pending = cards.filter((c) => !c.latest);
 
   return (
-    <main className="mx-auto max-w-5xl px-4 py-10">
-      <header className="mb-8">
-        <h1 className="text-2xl font-bold text-neutral-900 dark:text-neutral-50">
-          ਚੜ੍ਹਦੀਕਲਾ ਈ-ਪੇਪਰ
-        </h1>
-        <p className="mt-1 text-sm text-neutral-600 dark:text-neutral-400">
-          Choose a publication to read today&apos;s edition or browse the archive.
+    <main className="mx-auto max-w-6xl px-4 py-8">
+      <header className="mb-7">
+        <h1 className="text-2xl font-bold text-ink sm:text-3xl">ਅੱਜ ਦੇ ਅਖ਼ਬਾਰ</h1>
+        <p className="mt-1 text-sm text-ink-faint">
+          {formatDate(today)} · ਕੋਈ ਵੀ ਅਖ਼ਬਾਰ ਚੁਣੋ ਜਾਂ ਪੁਰਾਣੇ ਅੰਕ ਵੇਖੋ
         </p>
       </header>
 
-      <ul className="grid gap-3 sm:grid-cols-2">
-        {cards.map((p) => (
+      {live.length === 0 && pending.length === 0 && (
+        <p className="rounded-xl border border-line p-8 text-center text-sm text-ink-faint">
+          ਅਜੇ ਕੋਈ ਅਖ਼ਬਾਰ ਨਹੀਂ ਜੋੜਿਆ ਗਿਆ।
+        </p>
+      )}
+
+      <ul className="grid gap-5 sm:grid-cols-3 lg:grid-cols-4">
+        {live.map((p) => (
           <li key={p.id}>
             <Link
               href={`/${p.slug}/`}
-              className="block rounded-xl border border-neutral-200 p-4 transition-colors hover:border-neutral-400 dark:border-neutral-800 dark:hover:border-neutral-600"
+              className="group block rounded-xl border border-line bg-surface p-3 transition-colors hover:border-brand-ink"
             >
-              <span className="block font-semibold text-neutral-900 dark:text-neutral-50">
+              <div className="page-frame mb-3 overflow-hidden rounded-lg border border-line">
+                {p.cover ? (
+                  /* eslint-disable-next-line @next/next/no-img-element */
+                  <img
+                    src={p.cover}
+                    alt=""
+                    width={320} height={452}
+                    loading="lazy"
+                    className="block aspect-[320/452] w-full bg-white object-cover object-top transition-transform duration-200 group-hover:scale-[1.02]"
+                  />
+                ) : (
+                  <div className="aspect-[320/452] w-full" />
+                )}
+              </div>
+
+              <h2 className="font-bold leading-snug text-ink">
                 {p.name_local ?? p.name}
-              </span>
-              <span className="mt-0.5 block text-xs text-neutral-500">
-                {p.name}
-                {p.region ? ` · ${p.region}` : ""}
-              </span>
-              <span className="mt-2 block text-xs text-neutral-600 dark:text-neutral-400">
-                {p.latest
-                  ? `Latest: ${formatDate(p.latest.publish_date, p.language)}`
-                  : "No editions yet"}
-              </span>
+              </h2>
+              <p className="mt-0.5 text-xs text-ink-faint">
+                {p.region ?? p.name}
+              </p>
+              <p className="mt-2 flex items-center gap-1.5 text-xs">
+                {p.latest!.publish_date === today && (
+                  <span className="rounded bg-accent px-1.5 py-0.5 font-semibold text-white">
+                    ਅੱਜ
+                  </span>
+                )}
+                <span className="text-ink-soft">
+                  {formatDate(p.latest!.publish_date, p.language)}
+                </span>
+              </p>
             </Link>
           </li>
         ))}
       </ul>
+
+      {pending.length > 0 && (
+        <section className="mt-10">
+          <h2 className="mb-3 text-sm font-semibold text-ink-faint">
+            ਅਜੇ ਕੋਈ ਅੰਕ ਨਹੀਂ
+          </h2>
+          <ul className="flex flex-wrap gap-2">
+            {pending.map((p) => (
+              <li key={p.id}
+                className="rounded-lg border border-line px-3 py-1.5 text-sm text-ink-faint">
+                {p.name_local ?? p.name}
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
     </main>
   );
 }

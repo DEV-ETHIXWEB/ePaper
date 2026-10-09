@@ -213,14 +213,14 @@ export default function PageViewer({
     <div className="flex flex-col gap-3">
       <div className="flex flex-wrap items-center gap-2">
         <button type="button" onClick={() => goTo(index - 1)} disabled={index === 0}
-          className="rounded-lg border border-neutral-300 px-3 py-1.5 text-sm font-medium disabled:opacity-40 dark:border-neutral-700">
+          className="rounded-lg border border-line px-3 py-1.5 text-sm font-medium disabled:opacity-40 border-line">
           ← ਪਿੱਛੇ
         </button>
-        <span className="text-sm tabular-nums text-neutral-600 dark:text-neutral-400">
+        <span className="text-sm tabular-nums text-ink-faint">
           ਸਫ਼ਾ {page.number} / {pages.length}
         </span>
         <button type="button" onClick={() => goTo(index + 1)} disabled={index === pages.length - 1}
-          className="rounded-lg border border-neutral-300 px-3 py-1.5 text-sm font-medium disabled:opacity-40 dark:border-neutral-700">
+          className="rounded-lg border border-line px-3 py-1.5 text-sm font-medium disabled:opacity-40 border-line">
           ਅੱਗੇ →
         </button>
 
@@ -228,22 +228,22 @@ export default function PageViewer({
           <button type="button" onClick={toggleClipMode} aria-pressed={clipMode}
             className={`me-2 rounded-lg px-3 py-1.5 text-sm font-semibold ${
               clipMode
-                ? "bg-blue-600 text-white"
-                : "border border-neutral-300 dark:border-neutral-700"
+                ? "bg-brand text-white"
+                : "border border-line"
             }`}>
             ✂ ਕਲਿੱਪ
           </button>
           <button type="button" aria-label="Zoom out"
             onClick={() => setZoom((z) => Math.max(z / 1.4, MIN_ZOOM))}
-            className="size-9 rounded-lg border border-neutral-300 text-lg dark:border-neutral-700">−</button>
-          <span className="w-14 text-center text-sm tabular-nums text-neutral-600 dark:text-neutral-400">
+            className="size-9 rounded-lg border border-line text-lg border-line">−</button>
+          <span className="w-14 text-center text-sm tabular-nums text-ink-faint">
             {Math.round(zoom * 100)}%
           </span>
           <button type="button" aria-label="Zoom in"
             onClick={() => setZoom((z) => Math.min(z * 1.4, MAX_ZOOM))}
-            className="size-9 rounded-lg border border-neutral-300 text-lg dark:border-neutral-700">+</button>
+            className="size-9 rounded-lg border border-line text-lg border-line">+</button>
           <button type="button" onClick={resetView}
-            className="ms-1 rounded-lg border border-neutral-300 px-3 py-1.5 text-sm dark:border-neutral-700">
+            className="ms-1 rounded-lg border border-line px-3 py-1.5 text-sm border-line">
             ਰੀਸੈੱਟ
           </button>
         </div>
@@ -251,11 +251,11 @@ export default function PageViewer({
 
       {clipMode && (
         <div className="flex flex-wrap items-center gap-3 rounded-lg bg-blue-50 px-3 py-2 text-sm dark:bg-blue-950/40">
-          <span className="text-blue-900 dark:text-blue-200">
+          <span className="text-ink">
             ਖ਼ਬਰ ਦੇ ਦੁਆਲੇ ਉਂਗਲ ਜਾਂ ਮਾਊਸ ਨਾਲ ਚੌਰਸ ਬਣਾਓ
           </span>
           <button type="button" onClick={submitClip} disabled={!sel || clipping}
-            className="ms-auto rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-semibold text-white disabled:opacity-40">
+            className="ms-auto rounded-lg bg-brand px-3 py-1.5 text-xs font-semibold text-white disabled:opacity-40">
             {clipping ? "ਤਿਆਰ ਹੋ ਰਿਹਾ…" : "ਸਾਂਝਾ ਕਰੋ"}
           </button>
           <button type="button" onClick={toggleClipMode}
@@ -271,7 +271,7 @@ export default function PageViewer({
 
       <div
         ref={frameRef}
-        className="relative overflow-hidden rounded-xl border border-neutral-200 bg-neutral-100 dark:border-neutral-800 dark:bg-neutral-900"
+        className="relative overflow-hidden rounded-xl border border-line bg-surface-soft border-line bg-surface"
         style={{
           touchAction: clipMode || zoom > 1 ? "none" : "pan-y",
           cursor: clipMode ? "crosshair" : zoom > 1 ? (dragging ? "grabbing" : "grab") : "auto",
@@ -318,7 +318,7 @@ export default function PageViewer({
         {clipMode && sel && sel.w > 0 && sel.h > 0 && (
           <div
             aria-hidden
-            className="pointer-events-none absolute border-2 border-blue-500 bg-blue-500/15"
+            className="pointer-events-none absolute border-2 border-brand-ink bg-brand-ink/20"
             style={{ left: pct(sel.x), top: pct(sel.y), width: pct(sel.w), height: pct(sel.h) }}
           />
         )}
@@ -329,12 +329,12 @@ export default function PageViewer({
           <button key={p.number} type="button" onClick={() => goTo(i)}
             aria-label={`ਸਫ਼ਾ ${p.number}`} aria-current={i === index}
             className={`shrink-0 overflow-hidden rounded border-2 transition-colors ${
-              i === index ? "border-blue-600" : "border-transparent hover:border-neutral-400"
+              i === index ? "border-brand" : "border-transparent hover:border-brand-ink"
             }`}>
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src={p.thumb} alt="" width={64} height={90} loading="lazy"
               className="block h-[90px] w-16 bg-white object-cover" />
-            <span className="block py-0.5 text-center text-[10px] tabular-nums text-neutral-500">
+            <span className="block py-0.5 text-center text-[10px] tabular-nums text-ink-faint">
               {p.number}
             </span>
           </button>

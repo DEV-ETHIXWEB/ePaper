@@ -47,13 +47,13 @@ export default async function SearchPage({ searchParams }: Props) {
 
   return (
     <main className="mx-auto max-w-3xl px-4 py-6">
-      <nav className="mb-4 text-xs text-neutral-500">
+      <nav className="mb-4 text-xs text-ink-faint">
         <Link href="/" className="underline">ਸਾਰੇ ਅਖ਼ਬਾਰ</Link>
         <span className="mx-1.5">/</span>
         <span>ਖੋਜ</span>
       </nav>
 
-      <h1 className="mb-4 text-xl font-bold text-neutral-900 dark:text-neutral-50">
+      <h1 className="mb-4 text-xl font-bold text-ink">
         ਖ਼ਬਰਾਂ ਖੋਜੋ
       </h1>
 
@@ -65,13 +65,13 @@ export default async function SearchPage({ searchParams }: Props) {
           autoFocus
           placeholder="ਸ਼ਬਦ ਲਿਖੋ, ਜਿਵੇਂ ਪਟਿਆਲਾ"
           aria-label="ਖੋਜ"
-          className="min-w-0 flex-1 rounded-lg border border-neutral-300 px-3 py-2 text-sm dark:border-neutral-700 dark:bg-neutral-950"
+          className="min-w-0 flex-1 rounded-lg border border-line px-3 py-2 text-sm border-line bg-surface"
         />
         <select
           name="p"
           defaultValue={pub}
           aria-label="ਅਖ਼ਬਾਰ"
-          className="rounded-lg border border-neutral-300 px-3 py-2 text-sm dark:border-neutral-700 dark:bg-neutral-950"
+          className="rounded-lg border border-line px-3 py-2 text-sm border-line bg-surface"
         >
           <option value="">ਸਾਰੇ ਅਖ਼ਬਾਰ</option>
           {publications.map((p) => (
@@ -81,7 +81,7 @@ export default async function SearchPage({ searchParams }: Props) {
           ))}
         </select>
         <button type="submit"
-          className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white">
+          className="rounded-lg bg-brand px-4 py-2 text-sm font-semibold text-white">
           ਖੋਜੋ
         </button>
       </form>
@@ -93,7 +93,7 @@ export default async function SearchPage({ searchParams }: Props) {
       )}
 
       {q.length >= MIN_QUERY_LENGTH && (
-        <p className="mb-4 text-sm text-neutral-600 dark:text-neutral-400">
+        <p className="mb-4 text-sm text-ink-faint">
           {total > 0 ? `${total} ਸਫ਼ੇ ਮਿਲੇ` : "ਕੁਝ ਨਹੀਂ ਮਿਲਿਆ"}
         </p>
       )}
@@ -101,7 +101,7 @@ export default async function SearchPage({ searchParams }: Props) {
       <ol className="space-y-3">
         {items.map((hit) => (
           <li key={hit.page_id}
-            className="rounded-xl border border-neutral-200 p-3 dark:border-neutral-800">
+            className="rounded-xl border border-line p-3 border-line">
             <Link href={`/${hit.publication_slug}/${hit.publish_date}/?page=${hit.page_number}`}
               className="flex gap-3">
               {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -109,14 +109,14 @@ export default async function SearchPage({ searchParams }: Props) {
                 width={64} height={90} loading="lazy"
                 className="h-[90px] w-16 shrink-0 rounded bg-white object-cover" />
               <div className="min-w-0">
-                <p className="text-sm font-semibold text-neutral-900 dark:text-neutral-100">
+                <p className="text-sm font-semibold text-ink">
                   {hit.publication_name_local ?? hit.publication_name}
                 </p>
-                <p className="text-xs text-neutral-500">
+                <p className="text-xs text-ink-faint">
                   {formatDate(hit.publish_date)} · ਸਫ਼ਾ {hit.page_number}
                 </p>
                 {/* Escaped in highlightSnippet; only its own <mark> survives. */}
-                <p className="mt-1 line-clamp-3 text-sm text-neutral-700 [&_mark]:bg-yellow-200 [&_mark]:text-inherit dark:text-neutral-300 dark:[&_mark]:bg-yellow-600/50"
+                <p className="mt-1 line-clamp-3 text-sm text-ink-soft"
                   dangerouslySetInnerHTML={{ __html: highlightSnippet(hit.snippet) }} />
               </div>
             </Link>
@@ -129,7 +129,7 @@ export default async function SearchPage({ searchParams }: Props) {
           {pageNum > 1 ? (
             <Link href={linkTo(pageNum - 1)} rel="prev" className="underline">← ਪਿੱਛੇ</Link>
           ) : <span />}
-          <span className="text-neutral-500 tabular-nums">{pageNum} / {lastPage}</span>
+          <span className="text-ink-faint tabular-nums">{pageNum} / {lastPage}</span>
           {pageNum < lastPage ? (
             <Link href={linkTo(pageNum + 1)} rel="next" className="underline">ਅੱਗੇ →</Link>
           ) : <span />}

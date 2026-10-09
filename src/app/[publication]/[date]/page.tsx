@@ -41,7 +41,7 @@ export default async function EditionPage({ params, searchParams }: Props) {
         <h1 className="text-xl font-bold">
           {issue.status === "processing" ? "ਤਿਆਰ ਹੋ ਰਿਹਾ ਹੈ" : "ਇਹ ਐਡੀਸ਼ਨ ਉਪਲਬਧ ਨਹੀਂ"}
         </h1>
-        <p className="mt-2 text-sm text-neutral-600">
+        <p className="mt-2 text-sm text-ink-faint">
           {issue.status === "processing"
             ? "This edition is still being prepared. Please check back shortly."
             : "This edition could not be published. The newsroom has been notified."}
@@ -66,18 +66,18 @@ export default async function EditionPage({ params, searchParams }: Props) {
 
   return (
     <main className="mx-auto max-w-5xl px-4 py-6">
-      <nav className="mb-4 text-xs text-neutral-500">
+      <nav className="mb-4 text-xs text-ink-faint">
         <Link href="/" className="underline">ਸਾਰੇ ਅਖ਼ਬਾਰ</Link>
         <span className="mx-1.5">/</span>
         <span>{issue.publication_name_local ?? issue.publication_name}</span>
       </nav>
 
-      <header className="mb-5 flex flex-wrap items-baseline justify-between gap-2 border-b border-neutral-200 pb-3 dark:border-neutral-800">
-        <h1 className="text-xl font-bold text-neutral-900 dark:text-neutral-50">
+      <header className="mb-5 flex flex-wrap items-baseline justify-between gap-2 border-b border-line pb-3 border-line">
+        <h1 className="text-xl font-bold text-ink">
           {issue.publication_name_local ?? issue.publication_name}
         </h1>
         <div className="flex items-baseline gap-3">
-          <p className="text-sm text-neutral-600 dark:text-neutral-400">
+          <p className="text-sm text-ink-faint">
             {formatDate(date, issue.publication_language)} · {issue.page_count} ਸਫ਼ੇ
           </p>
           <Link href={`/${publication}/archive/`} className="text-sm underline">

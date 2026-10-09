@@ -46,7 +46,7 @@ export default async function ArchivePage({ params, searchParams }: Props) {
     return (
       <main className="mx-auto max-w-2xl px-4 py-20 text-center">
         <h1 className="text-xl font-bold">{pub.name_local ?? pub.name}</h1>
-        <p className="mt-2 text-sm text-neutral-600 dark:text-neutral-400">
+        <p className="mt-2 text-sm text-ink-faint">
           ਅਜੇ ਕੋਈ ਅੰਕ ਪ੍ਰਕਾਸ਼ਿਤ ਨਹੀਂ ਹੋਇਆ।
         </p>
         <Link href="/" className="mt-6 inline-block text-sm underline">ਘਰ</Link>
@@ -71,7 +71,7 @@ export default async function ArchivePage({ params, searchParams }: Props) {
 
   return (
     <main className="mx-auto max-w-2xl px-4 py-6">
-      <nav className="mb-4 text-xs text-neutral-500">
+      <nav className="mb-4 text-xs text-ink-faint">
         <Link href="/" className="underline">ਸਾਰੇ ਅਖ਼ਬਾਰ</Link>
         <span className="mx-1.5">/</span>
         <Link href={`/${publication}/`} className="underline">
@@ -81,21 +81,21 @@ export default async function ArchivePage({ params, searchParams }: Props) {
         <span>ਪੁਰਾਣੇ ਅੰਕ</span>
       </nav>
 
-      <h1 className="mb-1 text-xl font-bold text-neutral-900 dark:text-neutral-50">
+      <h1 className="mb-1 text-xl font-bold text-ink">
         {pub.name_local ?? pub.name}
       </h1>
-      <p className="mb-5 text-sm text-neutral-600 dark:text-neutral-400">
+      <p className="mb-5 text-sm text-ink-faint">
         {available.size > 0
           ? `${formatMonth(month, lang)} ਵਿੱਚ ${available.size} ਅੰਕ`
           : `${formatMonth(month, lang)} ਵਿੱਚ ਕੋਈ ਅੰਕ ਨਹੀਂ`}
       </p>
 
-      <div className="rounded-xl border border-neutral-200 p-3 dark:border-neutral-800">
+      <div className="rounded-xl border border-line p-3 border-line">
         <div className="mb-3 flex items-center justify-between gap-2">
           {prev ? (
             <Link href={`/${publication}/archive/?m=${prev}`} rel="prev"
               aria-label={`${formatMonth(prev, lang)}`}
-              className="rounded-lg border border-neutral-300 px-3 py-1.5 text-sm dark:border-neutral-700">
+              className="rounded-lg border border-line px-3 py-1.5 text-sm border-line">
               ←
             </Link>
           ) : (
@@ -107,7 +107,7 @@ export default async function ArchivePage({ params, searchParams }: Props) {
           {next ? (
             <Link href={`/${publication}/archive/?m=${next}`} rel="next"
               aria-label={`${formatMonth(next, lang)}`}
-              className="rounded-lg border border-neutral-300 px-3 py-1.5 text-sm dark:border-neutral-700">
+              className="rounded-lg border border-line px-3 py-1.5 text-sm border-line">
               →
             </Link>
           ) : (
@@ -117,7 +117,7 @@ export default async function ArchivePage({ params, searchParams }: Props) {
 
         <div className="grid grid-cols-7 gap-1 text-center">
           {weekdays.map((d) => (
-            <div key={d} className="pb-1 text-[11px] font-medium text-neutral-500">{d}</div>
+            <div key={d} className="pb-1 text-[11px] font-medium text-ink-faint">{d}</div>
           ))}
 
           {cells.map((date, i) => {
@@ -128,8 +128,8 @@ export default async function ArchivePage({ params, searchParams }: Props) {
             if (!available.has(date)) {
               return (
                 <div key={date}
-                  className={`flex h-11 items-center justify-center rounded-lg text-sm tabular-nums text-neutral-400 dark:text-neutral-600 ${
-                    isToday ? "ring-1 ring-neutral-300 dark:ring-neutral-700" : ""
+                  className={`flex h-11 items-center justify-center rounded-lg text-sm tabular-nums text-ink-faint ${
+                    isToday ? "ring-1 ring-line" : ""
                   }`}>
                   {day}
                 </div>
@@ -138,8 +138,8 @@ export default async function ArchivePage({ params, searchParams }: Props) {
 
             return (
               <Link key={date} href={`/${publication}/${date}/`}
-                className={`flex h-11 items-center justify-center rounded-lg bg-blue-600 text-sm font-semibold tabular-nums text-white hover:bg-blue-700 ${
-                  isToday ? "ring-2 ring-blue-300 dark:ring-blue-500" : ""
+                className={`flex h-11 items-center justify-center rounded-lg bg-brand text-sm font-semibold tabular-nums text-white hover:opacity-90 ${
+                  isToday ? "ring-2 ring-brand-ink" : ""
                 }`}>
                 {day}
               </Link>
@@ -148,7 +148,7 @@ export default async function ArchivePage({ params, searchParams }: Props) {
         </div>
       </div>
 
-      <p className="mt-4 text-xs text-neutral-500">
+      <p className="mt-4 text-xs text-ink-faint">
         ਨੀਲੀ ਤਰੀਕ ਉੱਤੇ ਕਲਿੱਕ ਕਰ ਕੇ ਉਸ ਦਿਨ ਦਾ ਅਖ਼ਬਾਰ ਪੜ੍ਹੋ।
       </p>
     </main>

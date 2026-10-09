@@ -35,11 +35,11 @@ export default async function ClipPage({ params }: Props) {
     <main className="mx-auto max-w-2xl px-4 py-8">
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img src={url} alt="ਖ਼ਬਰ ਦੀ ਕਲਿੱਪ"
-        className="w-full rounded-xl border border-neutral-200 dark:border-neutral-800" />
+        className="w-full rounded-xl border border-line" />
 
       {issue && page && (
-        <div className="mt-4 text-sm text-neutral-600 dark:text-neutral-400">
-          <p className="font-semibold text-neutral-900 dark:text-neutral-100">
+        <div className="mt-4 text-sm text-ink-faint">
+          <p className="font-semibold text-ink">
             {issue.publication_name_local ?? issue.publication_name}
           </p>
           <p>

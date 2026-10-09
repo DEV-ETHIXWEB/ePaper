@@ -63,11 +63,11 @@ export default function UploadForm({
   };
 
   const field =
-    "h-11 w-full rounded-lg border border-neutral-300 bg-white px-3 text-sm outline-none focus:border-blue-600 dark:border-neutral-700 dark:bg-neutral-900";
+    "h-11 w-full rounded-lg border border-line bg-white px-3 text-sm outline-none focus:border-brand border-line bg-surface";
   const busy = state.kind === "uploading";
 
   return (
-    <form onSubmit={submit} className="grid gap-4 rounded-xl border border-neutral-200 p-5 dark:border-neutral-800">
+    <form onSubmit={submit} className="grid gap-4 rounded-xl border border-line p-5 border-line">
       <div className="grid gap-4 sm:grid-cols-2">
         <label className="grid gap-1.5">
           <span className="text-sm font-semibold">Publication</span>
@@ -89,13 +89,13 @@ export default function UploadForm({
         onDragLeave={() => setDragOver(false)}
         onDrop={(e) => { e.preventDefault(); setDragOver(false); pick(e.dataTransfer.files[0] ?? null); }}
         className={`rounded-xl border-2 border-dashed p-6 text-center transition-colors ${
-          dragOver ? "border-blue-600 bg-blue-50 dark:bg-blue-950" : "border-neutral-300 dark:border-neutral-700"
+          dragOver ? "border-brand bg-blue-50 dark:bg-blue-950" : "border-line"
         }`}
       >
         <input ref={inputRef} type="file" accept="application/pdf,.pdf" disabled={busy}
           onChange={(e) => pick(e.target.files?.[0] ?? null)}
-          className="block w-full text-sm file:mr-3 file:rounded-lg file:border-0 file:bg-neutral-900 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-white dark:file:bg-neutral-100 dark:file:text-neutral-900" />
-        <p className="mt-2 text-xs text-neutral-500">
+          className="block w-full text-sm file:mr-3 file:rounded-lg file:border-0 file:bg-brand file:px-4 file:py-2 file:text-sm file:font-semibold file:text-white" />
+        <p className="mt-2 text-xs text-ink-faint">
           {file ? `${file.name} · ${(file.size / 1024 / 1024).toFixed(1)} MB` : "or drop the PDF here"}
         </p>
       </div>
@@ -111,7 +111,7 @@ export default function UploadForm({
         </p>
       )}
       {busy && (
-        <p role="status" className="rounded-lg bg-neutral-100 px-3 py-2 text-sm dark:bg-neutral-900">
+        <p role="status" className="rounded-lg bg-surface-soft px-3 py-2 text-sm bg-surface">
           Converting {state.name}… this takes a few seconds per page. Keep this tab open.
         </p>
       )}
@@ -121,7 +121,7 @@ export default function UploadForm({
         {busy ? "Working…" : "Upload and publish"}
       </button>
 
-      <p className="text-xs text-neutral-500">
+      <p className="text-xs text-ink-faint">
         Uploading the same publication and date again replaces that edition.
       </p>
     </form>

@@ -29,10 +29,10 @@ export default function AdminPage() {
 
   return (
     <main className="mx-auto max-w-4xl px-4 py-8">
-      <header className="mb-6 flex flex-wrap items-center gap-3 border-b border-neutral-200 pb-4 dark:border-neutral-800">
+      <header className="mb-6 flex flex-wrap items-center gap-3 border-b border-line pb-4 border-line">
         <div>
           <h1 className="text-xl font-bold">ePaper newsroom</h1>
-          <p className="text-sm text-neutral-600 dark:text-neutral-400">
+          <p className="text-sm text-ink-faint">
             {todayCount} of {publications.length} editions published for {formatDate(today, "en")}
           </p>
         </div>
@@ -52,17 +52,17 @@ export default function AdminPage() {
       />
 
       <section className="mt-8">
-        <h2 className="mb-3 text-sm font-bold uppercase tracking-wide text-neutral-600 dark:text-neutral-400">
+        <h2 className="mb-3 text-sm font-bold uppercase tracking-wide text-ink-faint">
           Recent editions
         </h2>
         {recent.items.length === 0 ? (
-          <p className="rounded-xl border border-dashed border-neutral-300 p-8 text-center text-sm text-neutral-500 dark:border-neutral-700">
+          <p className="rounded-xl border border-dashed border-line p-8 text-center text-sm text-ink-faint border-line">
             Nothing uploaded yet. Choose a publication above to publish the first edition.
           </p>
         ) : (
-          <div className="overflow-x-auto rounded-xl border border-neutral-200 dark:border-neutral-800">
+          <div className="overflow-x-auto rounded-xl border border-line">
             <table className="w-full text-sm">
-              <thead className="bg-neutral-50 text-left dark:bg-neutral-900">
+              <thead className="bg-surface-soft text-left bg-surface">
                 <tr>
                   <th className="px-3 py-2 font-semibold">Publication</th>
                   <th className="px-3 py-2 font-semibold">Date</th>
@@ -73,7 +73,7 @@ export default function AdminPage() {
               </thead>
               <tbody>
                 {recent.items.map((i) => (
-                  <tr key={i.id} className="border-t border-neutral-200 dark:border-neutral-800">
+                  <tr key={i.id} className="border-t border-line">
                     <td className="px-3 py-2">{i.publication_name_local ?? i.publication_name}</td>
                     <td className="px-3 py-2 tabular-nums">{i.publish_date}</td>
                     <td className="px-3 py-2 tabular-nums">{i.page_count || "—"}</td>

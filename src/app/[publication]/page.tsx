@@ -21,7 +21,7 @@ export default async function PublicationPage({
     return (
       <main className="mx-auto max-w-xl px-4 py-20 text-center">
         <h1 className="text-xl font-bold">No editions yet</h1>
-        <p className="mt-2 text-sm text-neutral-600">
+        <p className="mt-2 text-sm text-ink-faint">
           Nothing has been published for this title so far.
         </p>
       </main>

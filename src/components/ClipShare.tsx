@@ -42,12 +42,12 @@ export default function ClipShare({
       onClick={onClose}
     >
       <div
-        className="w-full max-w-md rounded-xl bg-white p-5 shadow-xl dark:bg-neutral-900"
+        className="w-full max-w-md rounded-xl bg-white p-5 shadow-xl bg-surface"
         onClick={(e) => e.stopPropagation()}
       >
         <h2 className="mb-3 text-base font-bold">ਕਲਿੱਪ ਤਿਆਰ ਹੈ</h2>
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={imageUrl} alt="ਕਲਿੱਪ" className="mb-4 w-full rounded-lg border border-neutral-200 dark:border-neutral-700" />
+        <img src={imageUrl} alt="ਕਲਿੱਪ" className="mb-4 w-full rounded-lg border border-line border-line" />
 
         <div className="mb-3 flex flex-wrap gap-2">
           {targets.map((t) => (
@@ -57,14 +57,14 @@ export default function ClipShare({
             </a>
           ))}
           <a href={imageUrl} download
-            className="rounded-lg border border-neutral-300 px-3 py-2 text-xs font-semibold dark:border-neutral-700">
+            className="rounded-lg border border-line px-3 py-2 text-xs font-semibold border-line">
             ਡਾਊਨਲੋਡ
           </a>
         </div>
 
         <div className="flex gap-2">
           <input readOnly value={share}
-            className="min-w-0 flex-1 rounded-lg border border-neutral-300 bg-neutral-50 px-3 py-2 text-xs dark:border-neutral-700 dark:bg-neutral-950" />
+            className="min-w-0 flex-1 rounded-lg border border-line bg-surface-soft px-3 py-2 text-xs border-line bg-surface" />
           <button type="button"
             onClick={async () => {
               try {
@@ -73,7 +73,7 @@ export default function ClipShare({
                 setTimeout(() => setCopied(false), 2000);
               } catch { /* clipboard blocked; the field is selectable */ }
             }}
-            className="rounded-lg border border-neutral-300 px-3 py-2 text-xs font-semibold dark:border-neutral-700">
+            className="rounded-lg border border-line px-3 py-2 text-xs font-semibold border-line">
             {copied ? "ਕਾਪੀ ਹੋਇਆ" : "ਕਾਪੀ"}
           </button>
         </div>

@@ -1,30 +1,136 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
+/* ------------------------------------------------------------------ *
+ * Design tokens
+ *
+ * Colours are split by ROLE, not by name. A token used as a background
+ * that carries white text cannot be re-tinted for dark mode without
+ * breaking that text, so the "surface" and "ink" roles are separate even
+ * where they start from the same hex. This is what keeps contrast at AA
+ * in both themes without maintaining two palettes.
+ * ------------------------------------------------------------------ */
+@theme {
+  /* Masthead navy. White on #15306b is 11.4:1. */
+  --color-brand: #15306b;
+  --color-brand-dark: #0e2250;
+  /* Text role: re-tinted for dark mode below, where #15306b is 1.6:1. */
+  --color-brand-ink: #15306b;
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  /* Used for "today" and other live markers. White on #b3261e is 6.4:1. */
+  --color-accent: #b3261e;
+  --color-accent-ink: #b3261e;
+
+  --color-ink: #15181d;
+  --color-ink-soft: #49515f;
+  /* 5.2:1 on white, 4.9:1 on the soft surface. */
+  --color-ink-faint: #646d7b;
+  --color-line: #e2e5ea;
+  --color-surface: #ffffff;
+  --color-surface-soft: #f5f6f8;
+
+  --font-sans: var(--font-latin), ui-sans-serif, system-ui, sans-serif;
+  /* Gurmukhi first: most of this interface is Punjabi. Devanagari is in the
+     stack because Bharat Desh Hamara is a Hindi paper. */
+  --font-indic: var(--font-gurmukhi), var(--font-devanagari), var(--font-latin), sans-serif;
 }
 
 @media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+  :root:not([data-theme="light"]) {
+    --color-ink: #eef1f6;
+    --color-ink-soft: #a9b2c0;
+    --color-ink-faint: #8a93a1;
+    --color-line: #262b34;
+    --color-surface: #0d1014;
+    --color-surface-soft: #161a20;
+    /* Only the text roles move. --color-brand keeps its value so the
+       masthead still carries white text at 11.4:1. */
+    --color-brand-ink: #93aaff;
+    --color-accent-ink: #ff8a80;
   }
 }
 
+:root[data-theme="dark"] {
+  --color-ink: #eef1f6;
+  --color-ink-soft: #a9b2c0;
+  --color-ink-faint: #8a93a1;
+  --color-line: #262b34;
+  --color-surface: #0d1014;
+  --color-surface-soft: #161a20;
+  --color-brand-ink: #93aaff;
+  --color-accent-ink: #ff8a80;
+}
+
+@theme inline {
+  --color-background: var(--color-surface);
+  --color-foreground: var(--color-ink);
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--color-surface);
+  color: var(--color-ink);
+  font-family: var(--font-indic);
+  /* Gurmukhi carries marks above and below the baseline, so it needs more
+     leading than a Latin-only stack would. */
+  line-height: 1.7;
+  -webkit-font-smoothing: antialiased;
+}
+
+::selection {
+  background: var(--color-brand);
+  color: #fff;
+}
+
+:focus-visible {
+  /* Brand, not the accent. The accent is red and reads as a validation error
+     on a field that has only just been focused. */
+  outline: 2px solid var(--color-brand-ink);
+  outline-offset: 2px;
+  border-radius: 3px;
+}
+
+/* On the navy masthead the brand outline disappears into the background. */
+header :focus-visible {
+  outline-color: #ffffff;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
 }
 
 /* Thumbnail strip scrolls horizontally without a visible bar. */
 .no-scrollbar { scrollbar-width: none; -ms-overflow-style: none; }
 .no-scrollbar::-webkit-scrollbar { display: none; }
+
+/* The page reader is the one place a checkerboard helps: it shows the edge
+   of a page against the frame while an image is still loading. */
+.page-frame {
+  background-color: var(--color-surface-soft);
+  background-image:
+    linear-gradient(45deg, var(--color-line) 25%, transparent 25%),
+    linear-gradient(-45deg, var(--color-line) 25%, transparent 25%),
+    linear-gradient(45deg, transparent 75%, var(--color-line) 75%),
+    linear-gradient(-45deg, transparent 75%, var(--color-line) 75%);
+  background-size: 16px 16px;
+  background-position: 0 0, 0 8px, 8px -8px, -8px 0;
+}
+
+/* Search hit highlight.
+   Both colours are pinned rather than inherited. The text colour inside a
+   <mark> otherwise comes from the surrounding paragraph, which in dark mode
+   is a light grey on an amber background and fails contrast. Dark ink on pale
+   amber is 12.6:1 and reads the same in either theme. */
+mark {
+  background-color: #fde68a;
+  color: #15181d;
+  border-radius: 2px;
+  padding: 0 1px;
+}
