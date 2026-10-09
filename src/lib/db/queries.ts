@@ -49,17 +49,19 @@ export function upsertPublication(input: {
   name_local?: string | null;
   language?: Publication["language"];
   region?: string | null;
+  group_name?: string | null;
   sort_order?: number;
 }): Publication {
   db()
     .prepare(
-      `INSERT INTO publications (slug, name, name_local, language, region, sort_order)
-       VALUES (@slug, @name, @name_local, @language, @region, @sort_order)
+      `INSERT INTO publications (slug, name, name_local, language, region, group_name, sort_order)
+       VALUES (@slug, @name, @name_local, @language, @region, @group_name, @sort_order)
        ON CONFLICT(slug) DO UPDATE SET
          name       = excluded.name,
          name_local = excluded.name_local,
          language   = excluded.language,
          region     = excluded.region,
+         group_name = excluded.group_name,
          sort_order = excluded.sort_order`,
     )
     .run({
@@ -68,6 +70,7 @@ export function upsertPublication(input: {
       name_local: input.name_local ?? null,
       language: input.language ?? "pa",
       region: input.region ?? null,
+      group_name: input.group_name ?? null,
       sort_order: input.sort_order ?? 0,
     });
   return db()
@@ -248,6 +251,34 @@ export function listIssues(opts: {
     .all({ ...params, limit, offset }) as IssueWithPublication[];
 
   return { items, total };
+}
+
+/**
+ * The editions either side of this one, for moving a day at a time.
+ *
+ * A reader who opens Monday's paper usually wants Sunday's next, and making
+ * them go back to a calendar for that is friction a newspaper does not have.
+ * Gaps are handled by asking for the nearest ready edition rather than
+ * date arithmetic, so a Sunday with no paper is skipped rather than being a
+ * dead link.
+ */
+export function adjacentIssues(
+  publicationSlug: string,
+  date: string,
+): { previous: string | null; next: string | null } {
+  const q = (cmp: string, order: string) =>
+    (
+      db()
+        .prepare(
+          `SELECT i.publish_date AS d
+             FROM issues i JOIN publications p ON p.id = i.publication_id
+            WHERE p.slug = ? AND i.status = 'ready' AND i.publish_date ${cmp} ?
+            ORDER BY i.publish_date ${order} LIMIT 1`,
+        )
+        .get(publicationSlug, date) as { d: string } | undefined
+    )?.d ?? null;
+
+  return { previous: q("<", "DESC"), next: q(">", "ASC") };
 }
 
 /** Dates that have at least one ready edition, for the calendar picker. */

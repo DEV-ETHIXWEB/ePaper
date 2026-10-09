@@ -47,6 +47,7 @@ function migrate(conn: Database.Database): void {
   addColumn(conn, "issues", "text_status", "TEXT NOT NULL DEFAULT 'pending'");
   addColumn(conn, "issues", "text_source", "TEXT");
   addColumn(conn, "issues", "ocr_confidence", "REAL");
+  addColumn(conn, "publications", "group_name", "TEXT");
 }
 
 function addColumn(

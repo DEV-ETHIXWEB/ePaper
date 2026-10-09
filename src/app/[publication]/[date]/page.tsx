@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import PageViewer, { type ViewerPage } from "@/components/PageViewer";
-import { getIssue, getPublicationBySlug, listPages } from "@/lib/db/queries";
+import { adjacentIssues, getIssue, getPublicationBySlug, listPages } from "@/lib/db/queries";
 import { storage } from "@/lib/storage";
 import { formatDate } from "@/lib/format";
 
@@ -53,6 +53,7 @@ export default async function EditionPage({ params, searchParams }: Props) {
     );
   }
 
+  const { previous, next } = adjacentIssues(publication, date);
   const store = storage();
   const pages: ViewerPage[] = listPages(issue.id).map((p) => ({
     id: p.id,
@@ -100,6 +101,27 @@ export default async function EditionPage({ params, searchParams }: Props) {
 
       {/* A search hit links straight to the page it was found on. */}
       <PageViewer pages={pages} initialPage={Number(requestedPage) || 1} />
+
+      {/* A reader on Monday's paper usually wants Sunday's next. These skip to
+          the nearest edition that exists, so a day with no paper is not a dead
+          link. */}
+      <nav className="mt-6 flex items-center justify-between gap-3 border-t border-line pt-4 text-sm">
+        {previous ? (
+          <Link href={`/${publication}/${previous}/`} rel="prev"
+            className="text-ink-soft underline">
+            ← {formatDate(previous, issue.publication_language)}
+          </Link>
+        ) : <span />}
+        <Link href={`/${publication}/archive/`} className="text-ink-faint underline">
+          ਸਾਰੇ ਅੰਕ
+        </Link>
+        {next ? (
+          <Link href={`/${publication}/${next}/`} rel="next"
+            className="text-ink-soft underline">
+            {formatDate(next, issue.publication_language)} →
+          </Link>
+        ) : <span />}
+      </nav>
     </main>
   );
 }

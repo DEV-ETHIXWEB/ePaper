@@ -5,6 +5,8 @@ export interface Publication {
   name_local: string | null;
   language: "pa" | "hi" | "en";
   region: string | null;
+  /** Masthead family, so nine titles group instead of forming one flat grid. */
+  group_name: string | null;
   sort_order: number;
   is_active: 0 | 1;
   created_at: string;
