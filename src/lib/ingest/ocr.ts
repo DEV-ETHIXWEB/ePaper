@@ -60,8 +60,18 @@ function cacheDir(): string {
 function getWorker(lang: OcrLang): Promise<Worker> {
   let existing = workers.get(lang);
   if (!existing) {
-    // Punjabi pages carry English too — mastheads, datelines, numbers — so the
-    // Latin model is loaded alongside rather than forcing those into Gurmukhi.
+    /*
+     * The Latin model is loaded alongside the Indic one, and it is not
+     * optional. Measured on a real Charhdikala page at 1200px:
+     *
+     *   pan      17.0s  confidence 77  — and NO Latin text at all
+     *   pan+eng  28.7s  confidence 79  — "(Daily Charhdikala Karnal Friday
+     *                                     9 October" read correctly
+     *
+     * Dropping it is 40% faster and silently loses every masthead, dateline
+     * and English name on the page, which is a large share of what someone
+     * searches for. The extra twelve seconds a page is worth it.
+     */
     existing = createWorker(lang === "eng" ? "eng" : `${lang}+eng`, undefined, {
       cachePath: cacheDir(),
     });
@@ -102,8 +112,16 @@ export async function ocrPage(
   image: Buffer,
   lang: OcrLang,
 ): Promise<OcrResult> {
+  /*
+   * Greyscale and normalise first: newsprint has a warm cast and uneven ink,
+   * and flattening that lifts confidence measurably.
+   *
+   * No resize. The reading render is already 1200px and that is the sweet
+   * spot — measured, 1000px drops confidence from 79 to 50 because Gurmukhi
+   * matras are only a few pixels tall, while asking for 1600px changes
+   * nothing because there is no more detail in the source to use.
+   */
   const prepared = await sharp(image)
-    .resize({ width: 2200, withoutEnlargement: true })
     .greyscale()
     .normalise()
     .png()
