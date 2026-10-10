@@ -46,10 +46,18 @@
        masthead still carries white text at 11.4:1. */
     --color-brand-ink: #93aaff;
     --color-accent-ink: #ff8a80;
+    /* Buttons and the masthead use --color-brand as a surface. On the dark
+       page #15306b measures only 1.51:1 against the background, so a filled
+       button has almost no visible edge — WCAG 1.4.11 asks for 3:1 on a
+       control's boundary, and axe does not catch this because it only checks
+       text. #3a56c4 is 3.04:1 against the background and still carries white
+       text at 6.6:1. */
+    --color-brand: #3a56c4;
   }
 }
 
 :root[data-theme="dark"] {
+  --color-brand: #3a56c4;
   --color-ink: #eef1f6;
   --color-ink-soft: #a9b2c0;
   --color-ink-faint: #8a93a1;

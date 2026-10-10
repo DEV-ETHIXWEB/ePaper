@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { getLatestIssue, getPublicationBySlug } from "@/lib/db/queries";
 
@@ -20,10 +21,13 @@ export default async function PublicationPage({
   if (!latest) {
     return (
       <main className="mx-auto max-w-xl px-4 py-20 text-center">
-        <h1 className="text-xl font-bold">No editions yet</h1>
+        <h1 className="text-xl font-bold text-ink">ਅਜੇ ਕੋਈ ਅੰਕ ਨਹੀਂ</h1>
         <p className="mt-2 text-sm text-ink-faint">
-          Nothing has been published for this title so far.
+          ਇਸ ਅਖ਼ਬਾਰ ਦਾ ਕੋਈ ਅੰਕ ਅਜੇ ਪ੍ਰਕਾਸ਼ਿਤ ਨਹੀਂ ਹੋਇਆ।
         </p>
+        <Link href="/" className="mt-6 inline-block text-sm underline">
+          ਸਾਰੇ ਅਖ਼ਬਾਰ
+        </Link>
       </main>
     );
   }

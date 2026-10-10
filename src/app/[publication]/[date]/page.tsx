@@ -43,11 +43,11 @@ export default async function EditionPage({ params, searchParams }: Props) {
         </h1>
         <p className="mt-2 text-sm text-ink-faint">
           {issue.status === "processing"
-            ? "This edition is still being prepared. Please check back shortly."
-            : "This edition could not be published. The newsroom has been notified."}
+            ? "ਇਹ ਅੰਕ ਅਜੇ ਤਿਆਰ ਹੋ ਰਿਹਾ ਹੈ। ਥੋੜ੍ਹੀ ਦੇਰ ਬਾਅਦ ਵੇਖੋ।"
+            : "ਇਹ ਅੰਕ ਪ੍ਰਕਾਸ਼ਿਤ ਨਹੀਂ ਹੋ ਸਕਿਆ। ਦਫ਼ਤਰ ਨੂੰ ਸੂਚਿਤ ਕਰ ਦਿੱਤਾ ਗਿਆ ਹੈ।"}
         </p>
         <Link href={`/${publication}/`} className="mt-6 inline-block text-sm underline">
-          Back to latest edition
+          ਤਾਜ਼ਾ ਅੰਕ ਵੇਖੋ
         </Link>
       </main>
     );

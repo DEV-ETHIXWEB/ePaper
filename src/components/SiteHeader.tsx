@@ -15,7 +15,9 @@ export default function SiteHeader() {
       <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-x-4 gap-y-2 px-4 py-2.5">
         <Link href="/" className="flex items-baseline gap-2 font-bold">
           <span className="text-lg leading-tight">ਚੜ੍ਹਦੀਕਲਾ</span>
-          <span className="text-xs font-semibold uppercase tracking-wider text-white/70">
+          {/* 80%, not 70%. Measured over the dark-mode masthead, 70% white is
+              3.99:1 and 80% is 4.70:1, and this is small text. */}
+          <span className="text-xs font-semibold uppercase tracking-wider text-white/80">
             ePaper
           </span>
         </Link>

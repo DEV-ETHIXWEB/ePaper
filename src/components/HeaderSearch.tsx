@@ -1,6 +1,6 @@
 "use client";
 
-import { useRouter, useSearchParams } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Suspense } from "react";
 
 const MIN_QUERY = 3;
@@ -8,7 +8,13 @@ const MIN_QUERY = 3;
 function SearchBox() {
   const router = useRouter();
   const params = useSearchParams();
+  const pathname = usePathname();
   const active = params.get("q") ?? "";
+
+  // The newsroom area is not a reading surface. A reader's search box on the
+  // staff sign-in page is just confusing, and on the upload page it is one
+  // more thing between someone and the job they came to do.
+  if (pathname.startsWith("/admin")) return null;
 
   return (
     <form

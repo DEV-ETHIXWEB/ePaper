@@ -16,9 +16,9 @@ export default function LogoutButton() {
         router.push("/admin/login/");
         router.refresh();
       }}
-      className="rounded-lg border border-line px-3 py-1.5 text-sm font-medium disabled:opacity-60"
+      className="rounded-lg border border-line px-3 py-1.5 text-sm font-medium text-ink-soft transition-colors hover:border-brand-ink disabled:opacity-60"
     >
-      {busy ? "…" : "Sign out"}
+      {busy ? "…" : "ਸਾਈਨ ਆਊਟ"}
     </button>
   );
 }
